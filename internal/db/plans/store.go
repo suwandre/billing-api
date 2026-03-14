@@ -2,11 +2,11 @@ package plans
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SubscriptionStore interface {
@@ -16,11 +16,11 @@ type SubscriptionStore interface {
 }
 
 type subscriptionStore struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewSubscriptionStore(db *sql.DB) SubscriptionStore {
-	return &subscriptionStore{db: db}
+func NewSubscriptionStore(pool *pgxpool.Pool) SubscriptionStore {
+	return &subscriptionStore{pool: pool}
 }
 
 func (s *subscriptionStore) CreateSubscription(ctx context.Context, subscription *Subscription) (*Subscription, error) {
@@ -37,7 +37,7 @@ func (s *subscriptionStore) CreateSubscription(ctx context.Context, subscription
 		subscription.UpdatedAt = time.Now()
 	}
 
-	row := s.db.QueryRowContext(ctx, query,
+	row := s.pool.QueryRow(ctx, query,
 		subscription.Name,
 		subscription.CreatedAt,
 		subscription.UpdatedAt,
@@ -64,7 +64,7 @@ func (s *subscriptionStore) CreateSubscriptionPricing(ctx context.Context, prici
 		RETURNING id, subscription_id, type, price, created_at, updated_at
 	`
 
-	row := s.db.QueryRowContext(ctx, query,
+	row := s.pool.QueryRow(ctx, query,
 		pricing.SubscriptionID,
 		pricing.Type,
 		pricing.Price,
@@ -99,7 +99,7 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 		ORDER BY s.id, sp.id
   `
 
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subscriptions: %w", err)
 	}
@@ -113,12 +113,12 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 			subName        string
 			subCreatedAt   time.Time
 			subUpdatedAt   time.Time
-			pricingID      sql.NullString
-			pricingSubID   sql.NullString
-			pricingType    sql.NullInt16
-			pricingPrice   sql.NullFloat64
-			pricingCreated sql.NullTime
-			pricingUpdated sql.NullTime
+			pricingID      *string
+			pricingSubID   *string
+			pricingType    *int16
+			pricingPrice   *float64
+			pricingCreated *time.Time
+			pricingUpdated *time.Time
 		)
 
 		err := rows.Scan(
@@ -147,14 +147,14 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 			}
 		}
 
-		if pricingID.Valid {
+		if pricingID != nil {
 			pricing := SubscriptionPricing{
-				ID:             uuid.MustParse(pricingID.String),
-				SubscriptionID: uuid.MustParse(pricingSubID.String),
-				Type:           PricingType(pricingType.Int16),
-				Price:          pricingPrice.Float64,
-				CreatedAt:      pricingCreated.Time,
-				UpdatedAt:      pricingUpdated.Time,
+				ID:             uuid.MustParse(*pricingID),
+				SubscriptionID: uuid.MustParse(*pricingSubID),
+				Type:           PricingType(*pricingType),
+				Price:          *pricingPrice,
+				CreatedAt:      *pricingCreated,
+				UpdatedAt:      *pricingUpdated,
 			}
 			sub := subs[subID]
 			sub.Pricings = append(sub.Pricings, pricing)

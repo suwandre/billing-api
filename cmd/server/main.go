@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 )
 
@@ -22,20 +24,17 @@ func main() {
 		log.Fatal("DATABASE_URL must be set")
 	}
 
-	db, err := sql.Open("postgres", dbName)
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dbName)
 	if err != nil {
 		log.Fatalf("failed to open db connection: %v", err)
 	}
-	defer db.Close()
+	defer pool.Close()
 
-	// Actually connect the DB via Ping()
-	if err := db.Ping(); err != nil {
-		log.Fatalf("failed to ping db: %v", err)
-	}
-	log.Println("connected to db")
+	pool.Ping(ctx)
 
 	// Run migrations
-	if err := runMigrations(db); err != nil {
+	if err := runMigrations(pool); err != nil {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
@@ -54,7 +53,10 @@ func main() {
 	}
 }
 
-func runMigrations(db *sql.DB) error {
+func runMigrations(pool *pgxpool.Pool) error {
+	db := stdlib.OpenDBFromPool(pool)
+	defer db.Close()
+
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("could not create migration driver: %w", err)

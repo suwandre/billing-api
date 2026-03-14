@@ -1,8 +1,7 @@
 package internal
 
 import (
-	"database/sql"
-
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suwandre/billing-api/internal/db/customers"
 	"github.com/suwandre/billing-api/internal/db/plans"
 )
@@ -13,17 +12,17 @@ type Store interface {
 }
 
 type store struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewStore(db *sql.DB) Store {
-	return &store{db: db}
+func NewStore(pool *pgxpool.Pool) Store {
+	return &store{pool: pool}
 }
 
 func (s *store) Customers() customers.CustomerStore {
-	return customers.NewCustomerStore(s.db)
+	return customers.NewCustomerStore(s.pool)
 }
 
 func (s *store) Subscriptions() plans.SubscriptionStore {
-	return plans.NewSubscriptionStore(s.db)
+	return plans.NewSubscriptionStore(s.pool)
 }

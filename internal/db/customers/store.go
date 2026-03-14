@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CustomerStore interface {
@@ -13,11 +15,11 @@ type CustomerStore interface {
 }
 
 type customerStore struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewCustomerStore(db *sql.DB) CustomerStore {
-	return &customerStore{db: db}
+func NewCustomerStore(pool *pgxpool.Pool) CustomerStore {
+	return &customerStore{pool: pool}
 }
 
 func (c *customerStore) Create(ctx context.Context, customer *Customer) (*Customer, error) {
@@ -34,7 +36,7 @@ func (c *customerStore) Create(ctx context.Context, customer *Customer) (*Custom
 		customer.UpdatedAt = time.Now()
 	}
 
-	row := c.db.QueryRowContext(ctx, query,
+	row := c.pool.QueryRow(ctx, query,
 		customer.Email,
 		customer.Username,
 		customer.PasswordHash,
@@ -64,7 +66,7 @@ func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer
 		WHERE email = $1
 	`
 
-	row := c.db.QueryRowContext(ctx, query, email)
+	row := c.pool.QueryRow(ctx, query, email)
 
 	var customer CustomerResponse
 	err := row.Scan(
