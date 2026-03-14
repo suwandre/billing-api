@@ -57,7 +57,7 @@ func (c *customerStore) Create(ctx context.Context, customer *Customer) (*Custom
 	return &created, nil
 }
 
-func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer, error) {
+func (c *customerStore) GetByEmail(ctx context.Context, email string) (*CustomerResponse, error) {
 	query := `
 		SELECT id, email, username, created_at, updated_at 
 		FROM customers 
@@ -66,7 +66,7 @@ func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer
 
 	row := c.db.QueryRowContext(ctx, query, email)
 
-	var customer Customer
+	var customer CustomerResponse
 	err := row.Scan(
 		&customer.ID,
 		&customer.Email,
@@ -75,6 +75,9 @@ func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer
 		&customer.UpdatedAt,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("customer not found")
+		}
 		return nil, fmt.Errorf("failed to get customer by email: %w", err)
 	}
 
