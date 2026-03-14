@@ -9,7 +9,7 @@ import (
 
 type CustomerStore interface {
 	Create(ctx context.Context, customer *Customer) (*Customer, error)
-	GetByEmail(ctx context.Context, email string) (*Customer, error)
+	GetByEmail(ctx context.Context, email string) (*CustomerResponse, error)
 }
 
 type customerStore struct {
