@@ -9,10 +9,15 @@ import (
 
 type CustomerStore interface {
 	Create(ctx context.Context, customer *Customer) (*Customer, error)
+	GetByEmail(ctx context.Context, email string) (*Customer, error)
 }
 
 type customerStore struct {
 	db *sql.DB
+}
+
+func NewCustomerStore(db *sql.DB) CustomerStore {
+	return &customerStore{db: db}
 }
 
 func (c *customerStore) Create(ctx context.Context, customer *Customer) (*Customer, error) {
@@ -50,4 +55,28 @@ func (c *customerStore) Create(ctx context.Context, customer *Customer) (*Custom
 	}
 
 	return &created, nil
+}
+
+func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer, error) {
+	query := `
+		SELECT id, email, username, created_at, updated_at 
+		FROM customers 
+		WHERE email = $1
+	`
+
+	row := c.db.QueryRowContext(ctx, query, email)
+
+	var customer Customer
+	err := row.Scan(
+		&customer.ID,
+		&customer.Email,
+		&customer.Username,
+		&customer.CreatedAt,
+		&customer.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get customer by email: %w", err)
+	}
+
+	return &customer, nil
 }
