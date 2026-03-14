@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// A customer instance.
 type Customer struct {
 	ID           uuid.UUID `json:"id"`
 	Email        string    `json:"email"`
