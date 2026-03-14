@@ -50,7 +50,7 @@ func main() {
 
 	log.Printf("Server starting on :%s", port)
 	if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {
-		log.Fatal("server failed: %v", err)
+		log.Printf("server failed: %v", err)
 	}
 }
 
