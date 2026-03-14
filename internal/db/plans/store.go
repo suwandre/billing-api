@@ -92,8 +92,7 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 	query := `
     SELECT 
 				s.id, s.name, s.created_at, s.updated_at,
-				sp.id, sp.subscription_id, sp.type, sp.price, 
-				sp.created_at, sp.updated_at
+				sp.id, sp.subscription_id, sp.type, sp.price
 		FROM subscriptions s
 		LEFT JOIN subscription_pricings sp ON s.id = sp.subscription_id
 		ORDER BY s.id, sp.id
