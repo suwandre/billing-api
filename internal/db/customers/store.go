@@ -2,10 +2,10 @@ package customers
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -77,7 +77,7 @@ func (c *customerStore) GetByEmail(ctx context.Context, email string) (*Customer
 		&customer.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("customer not found")
 		}
 		return nil, fmt.Errorf("failed to get customer by email: %w", err)

@@ -31,7 +31,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	pool.Ping(ctx)
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatalf("failed to ping db: %v", err)
+	}
 
 	// Run migrations
 	if err := runMigrations(pool); err != nil {
@@ -49,7 +51,7 @@ func main() {
 
 	log.Printf("Server starting on :%s", port)
 	if err := r.Run(fmt.Sprintf(":%s", port)); err != nil {
-		log.Printf("server failed: %v", err)
+		log.Fatalf("server failed: %v", err)
 	}
 }
 
