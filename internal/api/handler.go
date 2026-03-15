@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/suwandre/billing-api/internal"
 )
@@ -18,5 +20,5 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (h *Handler) Ping(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "pong!"})
+	c.JSON(http.StatusOK, gin.H{"message": "pong!"})
 }
