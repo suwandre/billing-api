@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/suwandre/billing-api/internal/db/customers"
@@ -16,9 +17,9 @@ func (h *Handler) RegisterCustomerRoutes(r *gin.RouterGroup) {
 
 func (h *Handler) Create(c *gin.Context) {
 	type createCustomerRequest struct {
-		Email    string `json:"email"`
+		Email    string `json:"email" binding:"required"`
 		Username string `json:"username"`
-		Password string `json:"password"`
+		Password string `json:"password" binding:"required"`
 	}
 
 	body := createCustomerRequest{}
@@ -26,6 +27,15 @@ func (h *Handler) Create(c *gin.Context) {
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error parsing request": err.Error()})
 		return
+	}
+
+	if body.Username == "" {
+		atIndex := strings.Index(body.Email, "@")
+		if atIndex == -1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+			return
+		}
+		body.Username = body.Email[:atIndex]
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)

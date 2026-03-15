@@ -16,7 +16,7 @@ func (h *Handler) RegisterPlanRoutes(r *gin.RouterGroup) {
 
 func (h *Handler) CreateSubscription(c *gin.Context) {
 	type subscriptionRequest struct {
-		Name string `json:"name"`
+		Name string `json:"name" binding:"required"`
 	}
 
 	body := subscriptionRequest{}
@@ -34,14 +34,14 @@ func (h *Handler) CreateSubscription(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, subscription)
+	c.JSON(http.StatusCreated, subscription)
 }
 
 func (h *Handler) CreateSubscriptionPricing(c *gin.Context) {
 	type subscriptionPricingRequest struct {
-		SubscriptionID uuid.UUID `json:"subscription_id"`
-		Type           uint8     `json:"type"`
-		Price          float64   `json:"price"`
+		SubscriptionID uuid.UUID `json:"subscription_id" binding:"required"`
+		Type           uint8     `json:"type" binding:"required"`
+		Price          float64   `json:"price" binding:"required"`
 	}
 
 	body := subscriptionPricingRequest{}
@@ -61,7 +61,7 @@ func (h *Handler) CreateSubscriptionPricing(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, subscriptionPricing)
+	c.JSON(http.StatusCreated, subscriptionPricing)
 }
 
 func (h *Handler) List(c *gin.Context) {
