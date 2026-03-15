@@ -64,6 +64,13 @@ func (s *planStore) CreatePricing(ctx context.Context, pricing *PlanPricing) (*P
 		RETURNING id, plan_id, type, price, created_at, updated_at
 	`
 
+	if pricing.CreatedAt.IsZero() {
+		pricing.CreatedAt = time.Now()
+	}
+	if pricing.UpdatedAt.IsZero() {
+		pricing.UpdatedAt = time.Now()
+	}
+
 	row := s.pool.QueryRow(ctx, query,
 		pricing.PlanID,
 		pricing.Type,
