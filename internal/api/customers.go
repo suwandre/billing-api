@@ -9,11 +9,12 @@ import (
 )
 
 func (h *Handler) RegisterCustomerRoutes(r *gin.RouterGroup) {
-	r.POST("/create", h.CreateCustomer)
-	r.GET("/getByEmail", h.GetCustomerByEmail)
+	r.POST("/customers", h.Create)
+	// will be separated when more filters appear.
+	r.GET("/customers", h.GetByEmail)
 }
 
-func (h *Handler) CreateCustomer(c *gin.Context) {
+func (h *Handler) Create(c *gin.Context) {
 	type createCustomerRequest struct {
 		Email    string `json:"email"`
 		Username string `json:"username"`
@@ -46,7 +47,7 @@ func (h *Handler) CreateCustomer(c *gin.Context) {
 	c.JSON(http.StatusCreated, customer)
 }
 
-func (h *Handler) GetCustomerByEmail(c *gin.Context) {
+func (h *Handler) GetByEmail(c *gin.Context) {
 	email, ok := c.GetQuery("email")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email is required"})
