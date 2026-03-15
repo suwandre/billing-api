@@ -8,7 +8,7 @@ import (
 
 type Store interface {
 	Customers() customers.CustomerStore
-	Subscriptions() plans.SubscriptionStore
+	Plans() plans.PlanStore
 }
 
 type store struct {
@@ -23,6 +23,6 @@ func (s *store) Customers() customers.CustomerStore {
 	return customers.NewCustomerStore(s.pool)
 }
 
-func (s *store) Subscriptions() plans.SubscriptionStore {
-	return plans.NewSubscriptionStore(s.pool)
+func (s *store) Plans() plans.PlanStore {
+	return plans.NewPlanStore(s.pool)
 }

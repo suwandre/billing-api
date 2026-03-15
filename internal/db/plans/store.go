@@ -9,41 +9,41 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type SubscriptionStore interface {
-	CreateSubscription(ctx context.Context, subscription *Subscription) (*Subscription, error)
-	CreateSubscriptionPricing(ctx context.Context, pricing *SubscriptionPricing) (*SubscriptionPricing, error)
-	List(ctx context.Context) ([]SubscriptionResponse, error) // Includes subscription pricing
+type PlanStore interface {
+	Create(ctx context.Context, plan *Plan) (*Plan, error)
+	CreatePricing(ctx context.Context, pricing *PlanPricing) (*PlanPricing, error)
+	List(ctx context.Context) ([]PlanResponse, error) // Includes plan pricing
 }
 
-type subscriptionStore struct {
+type planStore struct {
 	pool *pgxpool.Pool
 }
 
-func NewSubscriptionStore(pool *pgxpool.Pool) SubscriptionStore {
-	return &subscriptionStore{pool: pool}
+func NewPlanStore(pool *pgxpool.Pool) PlanStore {
+	return &planStore{pool: pool}
 }
 
-func (s *subscriptionStore) CreateSubscription(ctx context.Context, subscription *Subscription) (*Subscription, error) {
+func (s *planStore) Create(ctx context.Context, plan *Plan) (*Plan, error) {
 	query := `
-		INSERT INTO subscriptions(name, created_at, updated_at)
+		INSERT INTO plans(name, created_at, updated_at)
 		VALUES ($1, $2, $3)
 		RETURNING id, name, created_at, updated_at
 	`
 
-	if subscription.CreatedAt.IsZero() {
-		subscription.CreatedAt = time.Now()
+	if plan.CreatedAt.IsZero() {
+		plan.CreatedAt = time.Now()
 	}
-	if subscription.UpdatedAt.IsZero() {
-		subscription.UpdatedAt = time.Now()
+	if plan.UpdatedAt.IsZero() {
+		plan.UpdatedAt = time.Now()
 	}
 
 	row := s.pool.QueryRow(ctx, query,
-		subscription.Name,
-		subscription.CreatedAt,
-		subscription.UpdatedAt,
+		plan.Name,
+		plan.CreatedAt,
+		plan.UpdatedAt,
 	)
 
-	var created Subscription
+	var created Plan
 	err := row.Scan(
 		&created.ID,
 		&created.Name,
@@ -51,61 +51,61 @@ func (s *subscriptionStore) CreateSubscription(ctx context.Context, subscription
 		&created.UpdatedAt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create subscription: %w", err)
+		return nil, fmt.Errorf("failed to create plan: %w", err)
 	}
 
 	return &created, nil
 }
 
-func (s *subscriptionStore) CreateSubscriptionPricing(ctx context.Context, pricing *SubscriptionPricing) (*SubscriptionPricing, error) {
+func (s *planStore) CreatePricing(ctx context.Context, pricing *PlanPricing) (*PlanPricing, error) {
 	query := `
-		INSERT INTO subscription_pricings(subscription_id, type, price, created_at, updated_at)
+		INSERT INTO plan_pricings(plan_id, type, price, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, subscription_id, type, price, created_at, updated_at
+		RETURNING id, plan_id, type, price, created_at, updated_at
 	`
 
 	row := s.pool.QueryRow(ctx, query,
-		pricing.SubscriptionID,
+		pricing.PlanID,
 		pricing.Type,
 		pricing.Price,
 		pricing.CreatedAt,
 		pricing.UpdatedAt,
 	)
 
-	var created SubscriptionPricing
+	var created PlanPricing
 	err := row.Scan(
 		&created.ID,
-		&created.SubscriptionID,
+		&created.PlanID,
 		&created.Type,
 		&created.Price,
 		&created.CreatedAt,
 		&created.UpdatedAt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create subscription pricing: %w", err)
+		return nil, fmt.Errorf("failed to create plan pricing: %w", err)
 	}
 
 	return &created, nil
 }
 
-func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, error) {
+func (s *planStore) List(ctx context.Context) ([]PlanResponse, error) {
 	query := `
     SELECT 
 				s.id, s.name, s.created_at, s.updated_at,
-				sp.id, sp.subscription_id, sp.type, sp.price,
+				sp.id, sp.plan_id, sp.type, sp.price,
 				sp.created_at, sp.updated_at
-		FROM subscriptions s
-		LEFT JOIN subscription_pricings sp ON s.id = sp.subscription_id
+		FROM plans s
+		LEFT JOIN plan_pricings sp ON s.id = sp.plan_id
 		ORDER BY s.id, sp.id
   `
 
 	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list subscriptions: %w", err)
+		return nil, fmt.Errorf("failed to list plans: %w", err)
 	}
 	defer rows.Close()
 
-	subs := make(map[uuid.UUID]SubscriptionResponse)
+	subs := make(map[uuid.UUID]PlanResponse)
 
 	for rows.Next() {
 		var (
@@ -134,27 +134,27 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 			&pricingUpdated,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan subscription: %w", err)
+			return nil, fmt.Errorf("failed to scan plan: %w", err)
 		}
 
 		if _, exists := subs[subID]; !exists {
-			subs[subID] = SubscriptionResponse{
+			subs[subID] = PlanResponse{
 				ID:        subID,
 				Name:      subName,
 				CreatedAt: subCreatedAt,
 				UpdatedAt: subUpdatedAt,
-				Pricings:  []SubscriptionPricing{},
+				Pricings:  []PlanPricing{},
 			}
 		}
 
 		if pricingID != nil {
-			pricing := SubscriptionPricing{
-				ID:             uuid.MustParse(*pricingID),
-				SubscriptionID: uuid.MustParse(*pricingSubID),
-				Type:           PricingType(*pricingType),
-				Price:          *pricingPrice,
-				CreatedAt:      *pricingCreated,
-				UpdatedAt:      *pricingUpdated,
+			pricing := PlanPricing{
+				ID:        uuid.MustParse(*pricingID),
+				PlanID:    uuid.MustParse(*pricingSubID),
+				Type:      PricingType(*pricingType),
+				Price:     *pricingPrice,
+				CreatedAt: *pricingCreated,
+				UpdatedAt: *pricingUpdated,
 			}
 			sub := subs[subID]
 			sub.Pricings = append(sub.Pricings, pricing)
@@ -162,7 +162,7 @@ func (s *subscriptionStore) List(ctx context.Context) ([]SubscriptionResponse, e
 		}
 	}
 
-	result := make([]SubscriptionResponse, 0, len(subs))
+	result := make([]PlanResponse, 0, len(subs))
 	for _, sub := range subs {
 		result = append(result, sub)
 	}

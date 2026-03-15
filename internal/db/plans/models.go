@@ -6,28 +6,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type Subscription struct {
+type Plan struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type SubscriptionPricing struct {
-	ID             uuid.UUID   `json:"id"`
-	SubscriptionID uuid.UUID   `json:"subscription_id"`
-	Type           PricingType `json:"type"` // Monthly or yearly
-	Price          float64     `json:"price"`
-	CreatedAt      time.Time   `json:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at"`
+type PlanPricing struct {
+	ID        uuid.UUID   `json:"id"`
+	PlanID    uuid.UUID   `json:"plan_id"`
+	Type      PricingType `json:"type"` // Monthly or yearly
+	Price     float64     `json:"price"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
 }
 
-type SubscriptionResponse struct {
-	ID        uuid.UUID             `json:"id"`
-	Name      string                `json:"name"`
-	Pricings  []SubscriptionPricing `json:"pricings"` // will be populated by JOIN
-	CreatedAt time.Time             `json:"created_at"`
-	UpdatedAt time.Time             `json:"updated_at"`
+type PlanResponse struct {
+	ID        uuid.UUID     `json:"id"`
+	Name      string        `json:"name"`
+	Pricings  []PlanPricing `json:"pricings"` // will be populated by JOIN
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 type PricingType uint8
