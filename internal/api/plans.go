@@ -11,6 +11,7 @@ import (
 func (h *Handler) RegisterPlanRoutes(r *gin.RouterGroup) {
 	r.POST("/subscriptions", h.CreateSubscription)
 	r.POST("/subscriptions/pricing", h.CreateSubscriptionPricing)
+	r.GET("/subscriptions", h.List)
 }
 
 func (h *Handler) CreateSubscription(c *gin.Context) {
