@@ -112,7 +112,7 @@ func (s *planStore) List(ctx context.Context) ([]PlanResponse, error) {
 	}
 	defer rows.Close()
 
-	subs := make(map[uuid.UUID]PlanResponse)
+	plans := make(map[uuid.UUID]PlanResponse)
 
 	for rows.Next() {
 		var (
@@ -144,8 +144,8 @@ func (s *planStore) List(ctx context.Context) ([]PlanResponse, error) {
 			return nil, fmt.Errorf("failed to scan plan: %w", err)
 		}
 
-		if _, exists := subs[subID]; !exists {
-			subs[subID] = PlanResponse{
+		if _, exists := plans[subID]; !exists {
+			plans[subID] = PlanResponse{
 				ID:        subID,
 				Name:      subName,
 				CreatedAt: subCreatedAt,
@@ -163,15 +163,15 @@ func (s *planStore) List(ctx context.Context) ([]PlanResponse, error) {
 				CreatedAt: *pricingCreated,
 				UpdatedAt: *pricingUpdated,
 			}
-			sub := subs[subID]
-			sub.Pricings = append(sub.Pricings, pricing)
-			subs[subID] = sub
+			plan := plans[subID]
+			plan.Pricings = append(plan.Pricings, pricing)
+			plans[subID] = plan
 		}
 	}
 
-	result := make([]PlanResponse, 0, len(subs))
-	for _, sub := range subs {
-		result = append(result, sub)
+	result := make([]PlanResponse, 0, len(plans))
+	for _, plan := range plans {
+		result = append(result, plan)
 	}
 
 	return result, nil
