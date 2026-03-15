@@ -12,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
+	"github.com/suwandre/billing-api/internal"
+	"github.com/suwandre/billing-api/internal/api"
 )
 
 func main() {
@@ -40,9 +42,12 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	// store := internal.NewStore(db)
+	store := internal.NewStore(pool)
+
+	h := api.NewHandler(store)
 
 	r := gin.Default()
+	h.RegisterRoutes(r)
 
 	port := os.Getenv("PORT")
 	if port == "" {
