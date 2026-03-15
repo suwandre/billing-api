@@ -40,8 +40,8 @@ func (h *Handler) CreateSubscription(c *gin.Context) {
 func (h *Handler) CreateSubscriptionPricing(c *gin.Context) {
 	type subscriptionPricingRequest struct {
 		SubscriptionID uuid.UUID `json:"subscription_id" binding:"required"`
-		Type           uint8     `json:"type" binding:"required"`
-		Price          float64   `json:"price" binding:"required"`
+		Type           uint8     `json:"type"`
+		Price          float64   `json:"price" binding:"required" gt=0"`
 	}
 
 	body := subscriptionPricingRequest{}
