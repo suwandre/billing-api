@@ -16,7 +16,9 @@ func NewHandler(store internal.Store) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
-	r.GET("/ping", h.Ping)
+	v1 := r.Group("/api/v1")
+	v1.GET("/ping", h.Ping)
+	h.RegisterCustomerRoutes(v1)
 }
 
 func (h *Handler) Ping(c *gin.Context) {
